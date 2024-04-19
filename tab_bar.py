@@ -1,5 +1,3 @@
-import re
-import subprocess
 from datetime import datetime
 
 from kitty.boss import get_boss
@@ -30,32 +28,6 @@ bat_text_color = as_rgb(color_as_int(opts.color15))
 SEPARATOR_SYMBOL, SOFT_SEPARATOR_SYMBOL = ("", "")
 RIGHT_MARGIN = 0
 ICON = "  "
-
-UNPLUGGED_ICONS = {
-    10: "🪫",
-    20: "🪫",
-    30: "🌘",
-    40: "🌗",
-    50: "🌗",
-    60: "🌗",
-    70: "🌖",
-    80: "🌖",
-    90: "🌕",
-    100: "🌕",
-}
-PLUGGED_ICONS = {
-    1: "🔋",
-}
-UNPLUGGED_COLORS = {
-    15: as_rgb(color_as_int(opts.color1)),
-    16: as_rgb(color_as_int(opts.color15)),
-}
-PLUGGED_COLORS = {
-    15: as_rgb(color_as_int(opts.color1)),
-    16: as_rgb(color_as_int(opts.color6)),
-    99: as_rgb(color_as_int(opts.color6)),
-    100: as_rgb(color_as_int(opts.color2)),
-}
 
 
 def _draw_icon(screen: Screen, index: int) -> int:
@@ -142,36 +114,6 @@ def _redraw_tab_bar(_):
 right_status_length = -1
 
 
-def get_battery_cells():
-    result = subprocess.run(["pmset", "-g", "batt"], capture_output=True, text=True)
-    output = result.stdout
-
-    match = re.search(r"(\d+)%;\s+(\w+);", output)
-    if not match:
-        return []
-
-    percent = int(match.group(1))
-    status = match.group(2).lower()
-
-    if status == "discharging":
-        icon_color = UNPLUGGED_COLORS[
-            min(UNPLUGGED_COLORS.keys(), key=lambda x: abs(x - percent))
-        ]
-        icon = UNPLUGGED_ICONS[
-            min(UNPLUGGED_ICONS.keys(), key=lambda x: abs(x - percent))
-        ]
-    else:
-        icon_color = PLUGGED_COLORS[
-            min(PLUGGED_COLORS.keys(), key=lambda x: abs(x - percent))
-        ]
-        icon = PLUGGED_ICONS[min(PLUGGED_ICONS.keys(), key=lambda x: abs(x - percent))]
-
-    percent_cell = (icon_color, str(percent) + "% ")
-    icon_cell = (icon_color, icon)
-
-    return [percent_cell, icon_cell]
-
-
 def draw_tab(
     draw_data: DrawData,
     screen: Screen,
@@ -194,10 +136,7 @@ def draw_tab(
     # print(opts.color1)
     global right_status_length
     date = datetime.now().strftime(" %Y/%m/%d ")
-
-    cells = get_battery_cells()
-    cells.append((date_bgcolor, date_fgcolor, date))
-
+    cells = [(date_bgcolor, date_fgcolor, date)]
     right_status_length = RIGHT_MARGIN
     for cell in cells:
         right_status_length += len(str(cell[2]))
